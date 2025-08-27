@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - portofolio_network
+
+networks:
+  portofolio_network:
+    driver: bridge
+    external: true
+volumes:
+  postgres_data:
+    driver: local
+    name: postgres_data
