@@ -3,10 +3,16 @@ package main
 import (
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/db"
-	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/model"
+	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/handler"
+	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/routes"
+	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/service"
+
+	// "github.com/yafiakmal/Mini-POS-API-Challenge/internal/db"
+
+	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/repository"
 )
 
 func main() {
@@ -17,16 +23,20 @@ func main() {
 	log.Printf("connecting to database")
 
 	DB := db.InitDB()
-	model.AutoMigrate(DB)
 
-	DB.Create(&model.Product{
-		Name:  "Papan Tulis",
-		Price: 35000,
-		Stock: 30,
-	})
+	pdRepo := repository.NewProductRepository(DB)
+	txRepo := repository.NewTransactionRepository(DB)
+	pdService := service.NewProductService(pdRepo)
+	txService := service.NewTransactionService(txRepo)
+	pdHandler := handler.NewProductHandler(pdService)
+	txHandler := handler.NewTransactionHandler(txService)
 
-	product := model.Product{}
-	DB.First(&product)
-	log.Printf("Product: %v", product)
+	r := gin.Default()
+
+	// Setup routes
+	routes.SetupProductRoutes(r, pdHandler)
+	routes.SetupTransactionRoutes(r, txHandler)
+
+	r.Run(":8080")
 
 }

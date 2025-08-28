@@ -24,7 +24,7 @@ func InitDB() *gorm.DB {
 			dbConfig.Host, dbConfig.User, dbConfig.Password,
 			dbConfig.DBName, dbConfig.Port, dbConfig.SSLMode, dbConfig.TimeZone,
 		)
-
+		fmt.Printf("dsn %s", dsn)
 		var err error
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
