@@ -11,14 +11,14 @@ services:
     # command: ["./wait-for-postgres.sh", "postgres"]
 
   postgres:
-    image: postgres:latest
+    image: postgres:13.22-alpine3.22
     container_name: postgres_container
     environment:
-      POSTGRES_USER: root
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: pos
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_alpine_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
@@ -29,6 +29,6 @@ networks:
     driver: bridge
     external: true
 volumes:
-  postgres_data:
-    name: postgres_data
+  postgres_alpine_data:
+    name: postgres_alpine_data
     external: true
