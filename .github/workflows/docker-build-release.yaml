@@ -30,7 +30,7 @@ jobs:
       # 4. Save image ke .tar
       - name: Save Docker image to tar
         run: |
-          docker save ${IMAGE_NAME}:${GITHUB_REF_NAME} -o ${IMAGE_NAME}${GITHUB_REF_NAME}.tar
+          docker save ${IMAGE_NAME}:${GITHUB_REF_NAME} -o ${IMAGE_NAME}_${GITHUB_REF_NAME}.tar
 
       - name: Check file exists
         run: ls -lh
