@@ -1,0 +1,42 @@
+name: Build and Release Docker Image
+
+on:
+  push:
+    tags:
+      - "v*" # jalan hanya kalau ada push tag, contoh: v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Docker (udah ada di GitHub runner default, jadi optional)
+      - name: Set up Docker
+        run: docker --version
+
+      # 3. Build Docker image
+      - name: Build Docker image
+        run: |
+          IMAGE_NAME=minipos-golang
+          TAG=${GITHUB_REF_NAME}   # contoh: v1.0.0
+          docker build -t $IMAGE_NAME:$TAG .
+
+      # 4. Save image ke .tar
+      - name: Save Docker image to tar
+        run: |
+          IMAGE_NAME=myapp
+          TAG=${GITHUB_REF_NAME}
+          docker save $IMAGE_NAME:$TAG -o ${IMAGE_NAME}_${TAG}.tar
+
+      # 5. Upload tar ke Release GitHub
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            minipos-golang_${{ github.ref_name }}.tar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
