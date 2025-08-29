@@ -23,7 +23,7 @@ ENV TZ=Asia/Jakarta
 
 # Copy binary & wait script
 COPY --from=builder /app/build/main .
-COPY --from=builder /app/.env .
+# COPY --from=builder /app/.env .
 # COPY wait-for-postgres.sh .
 # RUN chmod +x wait-for-postgres.sh
 
