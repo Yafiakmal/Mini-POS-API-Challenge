@@ -22,13 +22,13 @@ jobs:
       - name: Build Docker image
         run: |
           IMAGE_NAME=minipos-golang
-          TAG=${GITHUB_REF_NAME}   # contoh: v1.0.0
+          TAG=${GITHUB_REF_NAME}
           docker build -t $IMAGE_NAME:$TAG .
 
       # 4. Save image ke .tar
       - name: Save Docker image to tar
         run: |
-          IMAGE_NAME=myapp
+          IMAGE_NAME=minipos-golang
           TAG=${GITHUB_REF_NAME}
           docker save $IMAGE_NAME:$TAG -o ${IMAGE_NAME}_${TAG}.tar
 
