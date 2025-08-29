@@ -35,10 +35,14 @@ func (r *transactionRepo) Create(items []model.TransactionItem) error {
 
 	// Buat transaksi baru
 	transaction := model.Transaction{}
-	if err := tx.Create(&transaction).Error; err != nil {
+	result := tx.Create(&transaction)
+	if result.Error != nil {
 		tx.Rollback()
-		log.Printf("Error creating transaction: %v", err)
-		return err
+		log.Printf("Error creating transaction: %v", result.Error)
+		if isDuplicateKey(result.Error) {
+			return ErrDuplicate
+		}
+		return fmt.Errorf("%w: %v", ErrInternal, result.Error)
 	}
 
 	// 1. Kumpulkan semua product ID yang perlu di-lock
@@ -51,12 +55,17 @@ func (r *transactionRepo) Create(items []model.TransactionItem) error {
 	// 2. Lock semua produk sekaligus di luar loop
 	var products []model.Product
 
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+	result = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id IN ?", productIDs).
-		Find(&products).Error; err != nil {
+		Find(&products)
+
+	if result.Error != nil {
 		tx.Rollback()
-		log.Printf("Error fetching product")
-		return err
+		log.Printf("Error finding product: %v", result.Error)
+		if isRecordNotFound(result.Error) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("%w: %v", ErrInternal, result.Error)
 	}
 
 	// 3. Loop untuk validasi stok
@@ -66,18 +75,26 @@ func (r *transactionRepo) Create(items []model.TransactionItem) error {
 				// Cek stock availability
 				if va.Stock < v.Quantity {
 					tx.Rollback()
-					return fmt.Errorf("Insufficient stock for %s", va.Name)
+					return fmt.Errorf("insufficient stock for %s", va.Name)
 				}
 				// Buat transaction_items
 				if err := tx.Create(&v).Error; err != nil {
 					tx.Rollback()
 					log.Printf("Error creating transaction item: %v", err)
-					return err
+					if isDuplicateKey(err) {
+						return ErrDuplicate
+					}
+					return fmt.Errorf("%w: %v", ErrInternal, err)
 				}
 				if err := tx.Model(&va).Update("stock", va.Stock-v.Quantity).Error; err != nil {
 					tx.Rollback()
-					log.Printf("Error updating laptop stock: %v", err)
-					return err
+					if isDuplicateKey(err) {
+						return ErrDuplicate
+					}
+					if isRecordNotFound(err) {
+						return ErrNotFound
+					}
+					return fmt.Errorf("%w: %v", ErrInternal, err)
 				}
 			}
 		}
@@ -98,7 +115,11 @@ func (r *transactionRepo) FindAll() ([]model.History, error) {
 	db = db.Preload("TransactionItems")
 
 	if err := db.Find(&products).Error; err != nil {
-		return nil, err
+		log.Printf("Error finding product: %v", err)
+		if isRecordNotFound(err) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	histories := []model.History{}

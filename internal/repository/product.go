@@ -17,29 +17,50 @@ func NewProductRepository(db *gorm.DB) ProductRepo {
 }
 
 func (r *productRepo) Add(product *model.Product) error {
-	if err := r.db.Create(product).Error; err != nil {
-		return err
+	result := r.db.Create(product)
+
+	if result.Error != nil {
+		if isDuplicateKey(result.Error) {
+			return ErrDuplicate
+		}
+		return fmt.Errorf("%w: %v", ErrInternal, result.Error)
 	}
 	return nil
 }
+
 func (r *productRepo) FindByID(id uint) (*model.Product, error) {
 	product := model.Product{}
 	res := r.db.First(&product, id)
+
 	if res.Error != nil {
-		return nil, res.Error
+		if isRecordNotFound(res.Error) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: %v", ErrInternal, res.Error)
 	}
 	return &product, nil
 }
 func (r *productRepo) FindAll() ([]model.Product, error) {
 	product := []model.Product{}
-	if err := r.db.Find(&product).Error; err != nil {
-		return nil, err
+	res := r.db.Find(&product)
+	if res.Error != nil {
+		if isRecordNotFound(res.Error) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: %v", ErrInternal, res.Error)
 	}
 	return product, nil
 }
 func (r *productRepo) Updates(product *model.Product) error {
-	if err := r.db.Model(product).Updates(*product).Error; err != nil {
-		return err
+	res := r.db.Model(product).Updates(*product)
+	if res.Error != nil {
+		if isDuplicateKey(res.Error) {
+			return ErrDuplicate
+		}
+		if isRecordNotFound(res.Error) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("%w: %v", ErrInternal, res.Error)
 	}
 	return nil
 }
@@ -47,10 +68,10 @@ func (r *productRepo) Delete(id uint) error {
 	log.Println("deleting :", id)
 	res := r.db.Delete(&model.Product{}, id)
 	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected < 1 {
-		return fmt.Errorf("product not found")
+		if isRecordNotFound(res.Error) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("%w: %v", ErrInternal, res.Error)
 	}
 	return nil
 }
