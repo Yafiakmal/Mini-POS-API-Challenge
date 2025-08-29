@@ -8,6 +8,10 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      IMAGE_NAME: minipos-golang
 
     steps:
       # 1. Checkout source code
@@ -21,22 +25,18 @@ jobs:
       # 3. Build Docker image
       - name: Build Docker image
         run: |
-          IMAGE_NAME=minipos-golang
-          TAG=${GITHUB_REF_NAME}
-          docker build -t $IMAGE_NAME:$TAG .
+          docker build -t $IMAGE_NAME:${GITHUB_REF_NAME} .
 
       # 4. Save image ke .tar
       - name: Save Docker image to tar
         run: |
-          IMAGE_NAME=minipos-golang
-          TAG=${GITHUB_REF_NAME}
-          docker save $IMAGE_NAME:$TAG -o ${IMAGE_NAME}_${TAG}.tar
+          docker save $IMAGE_NAME:$TAG -o $IMAGE_NAME_${GITHUB_REF_NAME}.tar
 
       # 5. Upload tar ke Release GitHub
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            minipos-golang_${{ github.ref_name }}.tar
+            ${{IMAGE_NAME}}_${{ github.ref_name }}.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
