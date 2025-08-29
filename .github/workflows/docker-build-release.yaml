@@ -30,7 +30,7 @@ jobs:
       # 4. Save image ke .tar
       - name: Save Docker image to tar
         run: |
-          docker save $IMAGE_NAME:$TAG -o $IMAGE_NAME_${GITHUB_REF_NAME}.tar
+          docker save $IMAGE_NAME:${GITHUB_REF_NAME} -o $IMAGE_NAME_${GITHUB_REF_NAME}.tar
 
       # 5. Upload tar ke Release GitHub
       - name: Upload Release Asset
