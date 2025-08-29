@@ -45,6 +45,7 @@ volumes:
 to make sure `docker-compose.yaml` above works and postgres data persistence
 
 ```bash
+docker network create portofolio_network
 docker volume create postgres_alpine_data
 ```
 
