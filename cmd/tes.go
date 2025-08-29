@@ -10,4 +10,6 @@ package main
 
 // func main() {
 // 	fmt.Printf("%v", errors.Is(ErrTest2, ErrTest))
+// 	// fmt.Errorf("error dek")
+// 	fmt.Printf("end")
 // }

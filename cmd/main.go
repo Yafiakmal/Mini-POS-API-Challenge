@@ -19,7 +19,7 @@ import (
 func main() {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
-		env = "production"
+		log.Fatal("environment variable APP_ENV not initialized\nplease run with either:\n\n\tAPP_ENV=development go run cmd/main.go\n or \n\tAPP_ENV=production go run cmd/main.go")
 	}
 
 	// Hanya load .env kalau di development

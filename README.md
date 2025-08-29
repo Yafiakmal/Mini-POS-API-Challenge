@@ -74,7 +74,7 @@ chose one
 2. load image
 
 ```bash
-docker load -i minipos-golang_v1.0.9.tar
+docker load -i minipos-golang_v1.0.10.tar
 ```
 
 3. Create `.env` file in project root
@@ -99,7 +99,7 @@ APP_ENV=development # gonna drop the tables first for fresh models
 > - make sure you have **run the database** in the previous step `docker ps`
 
 ```bash
-docker run --env-file .env --network portofolio_network -p 8080:8080 --rm minipos-golang:v1.0.9
+docker run --env-file .env --network portofolio_network -p 8080:8080 --rm minipos-golang:v1.0.10
 ```
 
 ### Local
