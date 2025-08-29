@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/model"
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/service"
+	"github.com/yafiakmal/Mini-POS-API-Challenge/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,16 +24,20 @@ func (h *productHandler) CreateProduct(c *gin.Context) {
 	var req model.ProductRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.Error(c, http.StatusBadRequest, "body request not valid", err)
 		return
 	}
 
 	// Add product
 	if err := h.s.Add(&req); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrDuplicate) {
+			util.Error(c, http.StatusConflict, "cannot assign duplicate product", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
-	c.JSON(http.StatusCreated, req)
+	util.Created(c, req)
 }
 
 // func (h *productHandler) GetProduct(c *gin.Context) {
@@ -48,44 +54,56 @@ func (h *productHandler) CreateProduct(c *gin.Context) {
 func (h *productHandler) GetAllProducts(c *gin.Context) {
 	products, err := h.s.GetAll()
 	if err != nil {
-		c.JSON(http.StatusFound, gin.H{"error": err})
+		if errors.Is(err, service.ErrNotFound) {
+			util.Error(c, http.StatusNotFound, "not found", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "error", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, products)
+	util.Success(c, products)
 }
 
 func (h *productHandler) UpdateProduct(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		util.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 	var req model.ProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.Error(c, http.StatusBadRequest, "body request not valid", err)
 		return
 	}
 
 	if err := h.s.UpdateByID(uint(id), req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrDuplicate) {
+			util.Error(c, http.StatusConflict, "cannot assign duplicate product", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "error", err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Update Successfully"})
+	util.Success(c, req)
 }
 
 func (h *productHandler) DeleteProduct(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		util.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
 	if err := h.s.DeleteByID(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrNotFound) {
+			util.Error(c, http.StatusNotFound, "not found", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "error", err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Product deleted"})
+	util.Success(c, nil)
 }

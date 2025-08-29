@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/model"
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/repository"
 	"gorm.io/gorm"
@@ -21,7 +23,12 @@ func (s *productService) Add(product *model.ProductRequest) error {
 		Stock: product.Stock,
 	}
 	if err := s.repo.Add(&p); err != nil {
-		return err
+		switch {
+		case errors.Is(err, repository.ErrDuplicate):
+			return ErrDuplicate
+		default:
+			return ErrInternal
+		}
 	}
 	return nil
 }
@@ -29,7 +36,10 @@ func (s *productService) Add(product *model.ProductRequest) error {
 func (s *productService) GetAll() ([]model.Product, error) {
 	products, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, ErrInternal
 	}
 	return products, nil
 }
@@ -42,14 +52,24 @@ func (s *productService) UpdateByID(ID uint, product model.ProductRequest) error
 		Stock: product.Stock,
 	}
 	if err := s.repo.Updates(&prod); err != nil {
-		return err
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		} else if errors.Is(err, repository.ErrDuplicate) {
+			return ErrDuplicate
+		}
+		return ErrInternal
 	}
 	return nil
 }
 
 func (s *productService) DeleteByID(ID uint) error {
 	if err := s.repo.Delete(ID); err != nil {
-		return err
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		} else if errors.Is(err, repository.ErrDuplicate) {
+			return ErrDuplicate
+		}
+		return ErrInternal
 	}
 	return nil
 }

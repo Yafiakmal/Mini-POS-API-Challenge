@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/model"
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/repository"
 )
@@ -22,7 +24,12 @@ func (s *transactionService) CreateTransaction(items []model.TransactionRequest)
 		})
 	}
 	if err := s.repo.Create(transactionItem); err != nil {
-		return err
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		} else if errors.Is(err, repository.ErrDuplicate) {
+			return ErrDuplicate
+		}
+		return ErrInternal
 	}
 
 	return nil
@@ -31,7 +38,10 @@ func (s *transactionService) CreateTransaction(items []model.TransactionRequest)
 func (s *transactionService) GetHistory() ([]model.History, error) {
 	histories, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, ErrInternal
 	}
 	return histories, nil
 }

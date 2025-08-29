@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/model"
 	"github.com/yafiakmal/Mini-POS-API-Challenge/internal/service"
+	"github.com/yafiakmal/Mini-POS-API-Challenge/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,24 +22,32 @@ func NewTransactionHandler(s service.TransactionService) TransactionHandler {
 func (h *transactionHandler) CreateTransaction(c *gin.Context) {
 	var req []model.TransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
 	if err := h.s.CreateTransaction(req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrDuplicate) {
+			util.Error(c, http.StatusConflict, "cannot assign duplicate product", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "error", err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, req)
+	util.Created(c, req)
 }
 
 func (h *transactionHandler) GetTransactionHistory(c *gin.Context) {
 	histories, err := h.s.GetHistory()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrNotFound) {
+			util.Error(c, http.StatusNotFound, "not found", err)
+			return
+		}
+		util.Error(c, http.StatusInternalServerError, "error", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"histories": histories})
+	util.Success(c, histories)
 }
