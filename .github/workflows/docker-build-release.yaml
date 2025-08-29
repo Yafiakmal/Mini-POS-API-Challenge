@@ -37,6 +37,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{IMAGE_NAME}}_${{ github.ref_name }}.tar
+            ${{env.IMAGE_NAME}}_${{ github.ref_name }}.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
