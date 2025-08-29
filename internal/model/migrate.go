@@ -8,7 +8,7 @@ import (
 )
 
 func AutoMigrate(db *gorm.DB) error {
-	if os.Getenv("MODE") == "development" {
+	if os.Getenv("APP_ENV") == "development" {
 		err := db.Migrator().DropTable(&Product{}, &Transaction{}, &TransactionItem{})
 		if err != nil {
 			log.Fatalf("failed to drop table: %v", err)

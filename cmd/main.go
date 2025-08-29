@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -16,9 +17,18 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "production"
+	}
+
+	// Hanya load .env kalau di development
+	if env == "development" {
+		if err := godotenv.Load(); err != nil {
+			log.Println("Warning: .env file not found, using system environment")
+		} else {
+			log.Println(".env file loaded")
+		}
 	}
 	log.Printf("connecting to database")
 

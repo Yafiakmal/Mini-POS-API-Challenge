@@ -51,7 +51,7 @@ docker volume create postgres_alpine_data
 4. run docker compose
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 > - **notes** that we are using docker network `portofolio_network` in `docker-compose.yaml`. it is important to make sure running app with docker work
@@ -74,10 +74,26 @@ docker compose up -d
 docker load -i minipos-golang_1.0.0.tar
 ```
 
-3. run image
+3. Create `.env` file in project root
 
 ```bash
-docker run --network portofolio_network -p 8080:8080 --rm minipos-golang:1.0.0
+DB_HOST= localhost
+DB_USER= postgres
+DB_PASSWORD= postgres
+DB_NAME= pos
+DB_PORT= 5432
+DB_SSLMODE= disable
+DB_TIMEZONE= Asia/Jakarta
+
+# gorm would automatically migrate the models
+APP_ENV= production  # not gonna drop the tables first
+# APP_ENV= development # gonna drop the tables first for fresh models
+```
+
+4. run image
+
+```bash
+docker run --env-file .env --network portofolio_network -p 8080:8080 --rm minipos-golang:1.0.0
 ```
 
 ### Local
@@ -104,8 +120,8 @@ DB_SSLMODE= disable
 DB_TIMEZONE= Asia/Jakarta
 
 # gorm would automatically migrate the models
-MODE= production  # not gonna drop the tables first
-# MODE= development # gonna drop the tables first for fresh models
+APP_ENV= production  # not gonna drop the tables first
+# APP_ENV= development # gonna drop the tables first for fresh models
 ```
 
 3. Run with golang
